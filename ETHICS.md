@@ -1,12 +1,7 @@
-# Ethics And Privacy
+# Ethics And Public Scope
 
-This repository is designed for public review:
+This repository is a sanitized case study for portfolio review.
 
-- synthetic server names and camera identifiers
-- no real IP addresses, customer names, or condominium names
-- no credentials or production database files
-- no private alert payloads or incident details
-- no vendor SDK files or licensed binaries
+It does not include customer names, private camera addresses, gate recordings, access logs, credentials, proprietary SDK files, or production alert destinations. The code uses synthetic camera IDs, synthetic zones, synthetic detections, and synthetic events.
 
-It demonstrates system design and backend capability without exposing protected operational information.
-
+The goal is to demonstrate access-monitoring engineering decisions without exposing operational confidentiality.

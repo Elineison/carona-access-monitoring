@@ -1,119 +1,197 @@
 from __future__ import annotations
 
-import sqlite3
-from pathlib import Path
+from dataclasses import dataclass, field
 from time import time
-from typing import Iterable
+from typing import Dict, List
 
 
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS servers (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    role TEXT NOT NULL,
-    status TEXT NOT NULL,
-    base_url TEXT NOT NULL
-);
+@dataclass
+class AccessSession:
+    id: str
+    camera_id: str
+    started_at: float
+    last_seen_at: float
+    objects: Dict[str, dict] = field(default_factory=dict)
+    event_sent: bool = False
 
-CREATE TABLE IF NOT EXISTS cameras (
-    id TEXT PRIMARY KEY,
-    site TEXT NOT NULL,
-    name TEXT NOT NULL,
-    vendor TEXT NOT NULL,
-    channel INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS bindings (
-    camera_id TEXT PRIMARY KEY,
-    live_server_id TEXT NOT NULL,
-    analytics_server_id TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS alerts (
-    id TEXT PRIMARY KEY,
-    camera_id TEXT NOT NULL,
-    kind TEXT NOT NULL,
-    severity TEXT NOT NULL,
-    message TEXT NOT NULL,
-    created_at REAL NOT NULL
-);
-"""
-
-
-SEED_SERVERS = [
-    ("srv-live-01", "Live Gateway Worker", "live", "online", "http://demo-live.local"),
-    ("srv-analytics-01", "Analytics Worker A", "analytics", "online", "http://demo-analytics-a.local"),
-    ("srv-analytics-02", "Analytics Worker B", "analytics", "online", "http://demo-analytics-b.local"),
-]
-
-SEED_CAMERAS = [
-    ("cam-social-01", "Demo Tower", "Elevator Social", "generic-hikvision", 7),
-    ("cam-service-01", "Demo Tower", "Elevator Service", "generic-intelbras", 8),
-    ("cam-lobby-01", "Demo Plaza", "Lobby", "generic-dahua", 3),
-]
-
-SEED_BINDINGS = [
-    ("cam-social-01", "srv-live-01", "srv-analytics-01"),
-    ("cam-service-01", "srv-live-01", "srv-analytics-02"),
-    ("cam-lobby-01", "srv-live-01", "srv-analytics-01"),
-]
-
-
-class ControlPlaneStore:
-    def __init__(self, db_path: str = "control_plane_demo.db") -> None:
-        self.db_path = Path(db_path)
-        self._init()
-
-    def topology(self) -> dict:
+    def payload(self) -> dict:
         return {
-            "servers": self._select("SELECT * FROM servers ORDER BY id"),
-            "cameras": self._select("SELECT * FROM cameras ORDER BY id"),
-            "bindings": self._select("SELECT * FROM bindings ORDER BY camera_id"),
+            'id': self.id,
+            'camera_id': self.camera_id,
+            'started_at': self.started_at,
+            'last_seen_at': self.last_seen_at,
+            'elapsed_s': round(self.last_seen_at - self.started_at, 2),
+            'object_count': len(self.objects),
+            'objects': list(self.objects.values()),
+            'event_sent': self.event_sent,
         }
 
-    def ingest_alert(self, camera_id: str, kind: str, severity: str, message: str) -> dict:
-        alert = {
-            "id": f"alert-{int(time() * 1000)}",
-            "camera_id": camera_id,
-            "kind": kind,
-            "severity": severity,
-            "message": message,
-            "created_at": time(),
+
+class CaronaAccessMonitor:
+    def __init__(self) -> None:
+        self._cameras = [
+            {
+                'id': 'gate-carona-a01',
+                'name': 'Vehicle access gate',
+                'site': 'Residential access A',
+                'analysis_fps': 4.0,
+                'session_gap_s': 2.5,
+                'session_max_s': 15.0,
+                'allowed_objects_per_session': 1,
+                'roi': [
+                    {'x': 0.18, 'y': 0.18},
+                    {'x': 0.84, 'y': 0.16},
+                    {'x': 0.86, 'y': 0.88},
+                    {'x': 0.20, 'y': 0.92},
+                ],
+                'detection_zone': [
+                    {'x': 0.32, 'y': 0.34},
+                    {'x': 0.74, 'y': 0.34},
+                    {'x': 0.78, 'y': 0.82},
+                    {'x': 0.28, 'y': 0.84},
+                ],
+                'forbidden_zone': [
+                    {'x': 0.00, 'y': 0.62},
+                    {'x': 0.26, 'y': 0.62},
+                    {'x': 0.26, 'y': 1.00},
+                    {'x': 0.00, 'y': 1.00},
+                ],
+            },
+            {
+                'id': 'gate-carona-b02',
+                'name': 'Pedestrian and motorcycle gate',
+                'site': 'Residential access B',
+                'analysis_fps': 4.0,
+                'session_gap_s': 2.0,
+                'session_max_s': 12.0,
+                'allowed_objects_per_session': 1,
+                'roi': [
+                    {'x': 0.22, 'y': 0.20},
+                    {'x': 0.78, 'y': 0.20},
+                    {'x': 0.80, 'y': 0.90},
+                    {'x': 0.20, 'y': 0.90},
+                ],
+                'detection_zone': [],
+                'forbidden_zone': [],
+            },
+        ]
+        self._sessions: List[AccessSession] = []
+        self._events: List[dict] = []
+
+    def camera_ids(self) -> set[str]:
+        return {camera['id'] for camera in self._cameras}
+
+    def cameras(self) -> list[dict]:
+        return [
+            {
+                **camera,
+                'runtime': self._runtime_for(camera['id']),
+            }
+            for camera in self._cameras
+        ]
+
+    def runtime(self) -> dict:
+        active_sessions = [session.payload() for session in self._active_sessions()]
+        return {
+            'service': 'carona-access-monitoring',
+            'state': 'RUNNING',
+            'cameras_total': len(self._cameras),
+            'active_sessions': active_sessions,
+            'open_events': len([event for event in self._events if event['status'] == 'open']),
+            'session_gap_s': {camera['id']: camera['session_gap_s'] for camera in self._cameras},
         }
-        with self._connect() as conn:
-            conn.execute(
-                """
-                INSERT INTO alerts (id, camera_id, kind, severity, message, created_at)
-                VALUES (:id, :camera_id, :kind, :severity, :message, :created_at)
-                """,
-                alert,
-            )
-        return alert
 
-    def alerts(self) -> list[dict]:
-        return self._select("SELECT * FROM alerts ORDER BY created_at DESC")
+    def ingest_object(self, camera_id: str, object_id: str, class_name: str, confidence: float, zone: str) -> dict:
+        now = time()
+        camera = self._camera(camera_id)
+        session = self._current_or_new_session(camera, now)
+        session.last_seen_at = now
+        session.objects[object_id] = {
+            'object_id': object_id,
+            'class_name': class_name,
+            'confidence': round(float(confidence), 3),
+            'zone': zone,
+            'last_seen_at': now,
+        }
+        event = self._maybe_create_event(camera, session, zone)
+        return {'session': session.payload(), 'event': event}
 
-    def _init(self) -> None:
-        with self._connect() as conn:
-            conn.executescript(SCHEMA)
-            self._seed(conn, "servers", SEED_SERVERS)
-            self._seed(conn, "cameras", SEED_CAMERAS)
-            self._seed(conn, "bindings", SEED_BINDINGS)
+    def sessions(self) -> list[dict]:
+        return [session.payload() for session in self._sessions]
 
-    def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
+    def events(self) -> list[dict]:
+        return list(self._events)
 
-    @staticmethod
-    def _seed(conn: sqlite3.Connection, table: str, rows: Iterable[tuple]) -> None:
-        count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
-        if count:
-            return
-        placeholders = ",".join(["?"] * len(next(iter(rows))))
-        conn.executemany(f"INSERT INTO {table} VALUES ({placeholders})", rows)
+    def health(self) -> dict:
+        runtime = self.runtime()
+        return {
+            'service': 'carona-access-monitoring',
+            'state': 'HEALTHY',
+            'cameras_total': runtime['cameras_total'],
+            'active_sessions': len(runtime['active_sessions']),
+            'open_events': runtime['open_events'],
+            'issues': [],
+        }
 
-    def _select(self, sql: str) -> list[dict]:
-        with self._connect() as conn:
-            return [dict(row) for row in conn.execute(sql).fetchall()]
+    def _runtime_for(self, camera_id: str) -> dict:
+        sessions = [session.payload() for session in self._active_sessions() if session.camera_id == camera_id]
+        return {
+            'state': 'RUNNING',
+            'active_sessions': sessions,
+            'last_event_id': self._events[-1]['id'] if self._events else None,
+        }
 
+    def _current_or_new_session(self, camera: dict, now: float) -> AccessSession:
+        active = [session for session in self._active_sessions() if session.camera_id == camera['id']]
+        if active:
+            return active[-1]
+        session = AccessSession(
+            id=f"sess-carona-{len(self._sessions) + 1:04d}",
+            camera_id=camera['id'],
+            started_at=now,
+            last_seen_at=now,
+        )
+        self._sessions.append(session)
+        return session
+
+    def _active_sessions(self) -> list[AccessSession]:
+        now = time()
+        out = []
+        for session in self._sessions:
+            camera = self._camera(session.camera_id)
+            if now - session.last_seen_at <= float(camera['session_gap_s']):
+                out.append(session)
+        return out
+
+    def _maybe_create_event(self, camera: dict, session: AccessSession, zone: str) -> dict | None:
+        object_count = len(session.objects)
+        allowed = int(camera['allowed_objects_per_session'])
+        if session.event_sent:
+            return None
+        if object_count <= allowed and zone != 'forbidden':
+            return None
+
+        session.event_sent = True
+        event = {
+            'id': f"evt-carona-{len(self._events) + 1:04d}",
+            'type': 'possible_carona_access',
+            'severity': 'warning' if zone != 'forbidden' else 'critical',
+            'camera_id': camera['id'],
+            'camera_name': camera['name'],
+            'site': camera['site'],
+            'session_id': session.id,
+            'object_count': object_count,
+            'allowed_objects_per_session': allowed,
+            'objects': list(session.objects.values()),
+            'operator_note': 'More objects than expected crossed the access area in the same short session.',
+            'created_at': time(),
+            'status': 'open',
+        }
+        self._events.append(event)
+        return event
+
+    def _camera(self, camera_id: str) -> dict:
+        for camera in self._cameras:
+            if camera['id'] == camera_id:
+                return camera
+        raise KeyError(camera_id)

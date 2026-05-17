@@ -1,2 +1,1 @@
-"""Portfolio-safe central VMS control-plane demo."""
-
+"""Public-safe carona access monitoring case study."""
