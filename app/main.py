@@ -31,6 +31,7 @@ def index() -> str:
       <p>
         Sanitized FastAPI service for monitoring carona/tailgating access events:
         camera zones, short access sessions, object classes, count rules and operator events.
+        Dahua/Intelbras is represented as one operational platform family in this demo.
       </p>
       <ul>
         <li><a href="/api/carona/cameras">Configured cameras</a></li>

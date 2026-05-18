@@ -2,7 +2,7 @@
 
 Public case study for camera-based carona/tailgating access monitoring.
 
-This repository models a sanitized version of an access-monitoring workflow where a camera observes a gate, groups detections into short access sessions, counts objects crossing configured zones, and opens an operator event when the number of objects does not match the expected access rule.
+This repository models a sanitized version of an access-monitoring workflow where a camera observes a gate in a Dahua/Intelbras platform-family context, groups detections into short access sessions, counts objects crossing configured zones, and opens an operator event when the number of objects does not match the expected access rule.
 
 ## Operational Problem
 
@@ -10,7 +10,7 @@ In access-control operations, the relevant event is often not a single detection
 
 ## What This Demonstrates
 
-- FastAPI API for a camera-based access-monitoring module.
+- FastAPI API for a camera-based access-monitoring module using one Dahua/Intelbras operational platform family.
 - Session grouping with `session_gap_s` and `session_max_s` concepts.
 - Object-class handling for person, car, motorcycle, bicycle, truck, and bus.
 - Detection zone and forbidden zone configuration with normalized points.
@@ -49,7 +49,7 @@ curl http://127.0.0.1:8012/api/carona/events
 
 ## Public-Safe Scope
 
-All sites, camera IDs, events, zones, and detections are synthetic. No customer data, private IPs, gate recordings, credentials, vendor SDK files, or production alert payloads are included.
+All sites, camera IDs, events, zones, and detections are synthetic. No customer data, private IPs, gate recordings, credentials, platform SDK files, or production alert payloads are included.
 
 ## Skills Represented
 
