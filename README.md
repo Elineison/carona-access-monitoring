@@ -1,6 +1,10 @@
 # Carona Access Monitoring
 
-Módulo FastAPI que representa a detecção de possível acesso carona/tailgating em uma operação de controle de acesso por câmeras.
+Módulo FastAPI que representa a detecção de possível acesso carona/tailgating em uma operação VMS de controle de acesso por câmeras.
+
+## O Que Significa VMS Aqui
+
+VMS significa Sistema de Gerenciamento de Vídeo: a camada que centraliza câmeras, DVRs/NVRs, streams ao vivo, gravações, eventos, alertas e integrações. Neste repositório, o VMS é a base operacional que fornece o stream da câmera de acesso e recebe eventos, runtime e health checks do módulo.
 
 ## O Que o Sistema Faz
 
@@ -14,7 +18,7 @@ Módulo FastAPI que representa a detecção de possível acesso carona/tailgatin
 ## Contexto Representado
 
 - Família Dahua/Intelbras em controle de acesso.
-- Stream de vídeo em tempo real processado por worker de detecção.
+- Stream de vídeo em tempo real, vindo da operação VMS, processado por worker de detecção.
 - Integração entre câmera, módulo de analytics, API operacional e alertas.
 
 ## Endpoints

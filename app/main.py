@@ -10,7 +10,7 @@ from app.store import CaronaAccessMonitor
 app = FastAPI(
     title='Monitoramento de Acesso Carona',
     version='2.0.0',
-    description='Módulo público para monitoramento de acesso carona/tailgating em operações VMS.',
+    description='Módulo público para monitoramento de acesso carona/tailgating em operações VMS (Sistema de Gerenciamento de Vídeo).',
 )
 monitor = CaronaAccessMonitor()
 
@@ -31,6 +31,7 @@ def index() -> str:
       <p>
         Módulo FastAPI para sessões curtas de acesso, contagem de objetos, zonas de detecção,
         eventos operacionais e runtime. Representa analytics conectado a stream VMS em tempo real.
+        VMS significa Sistema de Gerenciamento de Vídeo, a camada que centraliza câmeras, streams, eventos e alertas.
       </p>
       <ul>
         <li><a href="/api/carona/cameras">Câmeras configuradas</a></li>
