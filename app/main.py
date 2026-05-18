@@ -8,9 +8,9 @@ from app.store import CaronaAccessMonitor
 
 
 app = FastAPI(
-    title='Carona Access Monitoring',
+    title='Monitoramento de Acesso Carona',
     version='2.0.0',
-    description='Public case study for carona/tailgating access monitoring in camera-based security operations.',
+    description='Estudo de caso público para monitoramento de acesso carona/tailgating em operações de segurança por câmeras.',
 )
 monitor = CaronaAccessMonitor()
 
@@ -26,19 +26,19 @@ class ObjectIn(BaseModel):
 def index() -> str:
     return '''
     <main style="font-family:system-ui;max-width:920px;margin:40px auto;line-height:1.5">
-      <p style="text-transform:uppercase;font-size:12px;letter-spacing:.08em;color:#476582">public case study</p>
-      <h1>Carona Access Monitoring</h1>
+      <p style="text-transform:uppercase;font-size:12px;letter-spacing:.08em;color:#476582">estudo de caso público</p>
+      <h1>Monitoramento de Acesso Carona</h1>
       <p>
-        Sanitized FastAPI service for monitoring carona/tailgating access events:
-        camera zones, short access sessions, object classes, count rules and operator events.
-        Dahua/Intelbras is represented as one operational platform family in this demo.
+        Serviço FastAPI sanitizado para monitorar eventos de acesso carona/tailgating:
+        zonas de câmera, sessões curtas de acesso, classes de objetos, regras de contagem e eventos operacionais.
+        Dahua/Intelbras é representado como uma única família operacional nesta demo.
       </p>
       <ul>
-        <li><a href="/api/carona/cameras">Configured cameras</a></li>
-        <li><a href="/api/carona/runtime">Runtime snapshot</a></li>
-        <li><a href="/api/carona/events">Events</a></li>
+        <li><a href="/api/carona/cameras">Câmeras configuradas</a></li>
+        <li><a href="/api/carona/runtime">Snapshot de runtime</a></li>
+        <li><a href="/api/carona/events">Eventos</a></li>
       </ul>
-      <p>Use <code>POST /api/demo/carona-access</code> to create a synthetic access event.</p>
+      <p>Use <code>POST /api/demo/carona-access</code> para criar um evento sintético de acesso.</p>
     </main>
     '''
 

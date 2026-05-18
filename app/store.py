@@ -32,8 +32,8 @@ class CaronaAccessMonitor:
         self._cameras = [
             {
                 'id': 'gate-carona-a01',
-                'name': 'Vehicle access gate',
-                'site': 'Residential access A',
+                'name': 'Portão de acesso de veículos',
+                'site': 'Acesso residencial A',
                 'platform_family': 'dahua-intelbras',
                 'analysis_fps': 4.0,
                 'session_gap_s': 2.5,
@@ -60,8 +60,8 @@ class CaronaAccessMonitor:
             },
             {
                 'id': 'gate-carona-b02',
-                'name': 'Pedestrian and motorcycle gate',
-                'site': 'Residential access B',
+                'name': 'Portão de pedestres e motos',
+                'site': 'Acesso residencial B',
                 'platform_family': 'dahua-intelbras',
                 'analysis_fps': 4.0,
                 'session_gap_s': 2.0,
@@ -185,7 +185,7 @@ class CaronaAccessMonitor:
             'object_count': object_count,
             'allowed_objects_per_session': allowed,
             'objects': list(session.objects.values()),
-            'operator_note': 'More objects than expected crossed the access area in the same short session.',
+            'operator_note': 'Mais objetos do que o esperado cruzaram a área de acesso na mesma sessão curta.',
             'created_at': time(),
             'status': 'open',
         }

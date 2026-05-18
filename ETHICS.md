@@ -1,7 +1,7 @@
-# Ethics And Public Scope
+# Ética e Escopo Público
 
-This repository is a sanitized case study for portfolio review.
+Este repositório é um estudo de caso sanitizado para avaliação de portfólio.
 
-It does not include customer names, private camera addresses, gate recordings, access logs, credentials, proprietary SDK files, or production alert destinations. The code uses synthetic camera IDs, synthetic zones, synthetic detections, and synthetic events.
+Ele não inclui nomes de clientes, endereços privados de câmeras, gravações de portão, logs de acesso, credenciais, SDKs proprietários ou destinos reais de alerta. O código usa IDs de câmera, zonas, detecções e eventos sintéticos.
 
-The goal is to demonstrate access-monitoring engineering decisions without exposing operational confidentiality.
+O objetivo é demonstrar decisões de engenharia para monitoramento de acesso sem expor confidencialidade operacional.
