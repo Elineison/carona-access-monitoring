@@ -10,7 +10,7 @@ from app.store import CaronaAccessMonitor
 app = FastAPI(
     title='Monitoramento de Acesso Carona',
     version='2.0.0',
-    description='Estudo de caso público para monitoramento de acesso carona/tailgating em operações de segurança por câmeras.',
+    description='Módulo público para monitoramento de acesso carona/tailgating em operações VMS.',
 )
 monitor = CaronaAccessMonitor()
 
@@ -26,12 +26,11 @@ class ObjectIn(BaseModel):
 def index() -> str:
     return '''
     <main style="font-family:system-ui;max-width:920px;margin:40px auto;line-height:1.5">
-      <p style="text-transform:uppercase;font-size:12px;letter-spacing:.08em;color:#476582">estudo de caso público</p>
+      <p style="text-transform:uppercase;font-size:12px;letter-spacing:.08em;color:#476582">módulo público</p>
       <h1>Monitoramento de Acesso Carona</h1>
       <p>
-        Serviço FastAPI sanitizado para monitorar eventos de acesso carona/tailgating:
-        zonas de câmera, sessões curtas de acesso, classes de objetos, regras de contagem e eventos operacionais.
-        Dahua/Intelbras é representado como uma única família operacional nesta demo.
+        Módulo FastAPI para sessões curtas de acesso, contagem de objetos, zonas de detecção,
+        eventos operacionais e runtime. Representa analytics conectado a stream VMS em tempo real.
       </p>
       <ul>
         <li><a href="/api/carona/cameras">Câmeras configuradas</a></li>
